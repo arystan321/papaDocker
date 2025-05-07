@@ -1,0 +1,33 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: [self-hosted, linux]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up Docker
+        uses: docker/setup-buildx-action@v2
+
+      - name: Build Docker image
+        run: |
+          docker build -t my-app .
+
+      - name: Push Docker image
+        run: |
+          docker tag my-app my-docker-repo/my-app:latest
+          docker push my-docker-repo/my-app:latest
+
+  deploy:
+    runs-on: [self-hosted, linux]
+    needs: build
+    steps:
+      - name: Deploy to Docker Swarm
+        run: |
+          docker stack deploy -c docker-compose.yml my-app
